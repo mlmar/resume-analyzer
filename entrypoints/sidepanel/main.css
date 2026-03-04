@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+@import 'primeicons/primeicons.css';
+
+@theme {
+    /* Brand */
+    --color-primary: var(--color-slate-700);
+    --color-primary-light: var(--color-slate-600);
+    --color-primary-dim: var(--color-slate-500);
+    --color-primary-dark: var(--color-slate-900);
+    --color-success: var(--color-green-600);
+    --color-error: var(--color-red-600);
+
+    /* Layout */
+    --color-page: var(--color-gray-50);
+    --color-surface: var(--color-white);
+
+    /* Borders */
+    --color-border: var(--color-gray-200);
+    --color-border-strong: var(--color-gray-300);
+
+    /* Text */
+    --color-ink: var(--color-gray-900);
+    --color-ink-secondary: var(--color-gray-700);
+    --color-muted: var(--color-gray-500);
+    --color-faint: var(--color-gray-400);
+}
+
+:root {
+    --scrollbar-thumb: rgba(0, 0, 0, 0.12);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
+}
