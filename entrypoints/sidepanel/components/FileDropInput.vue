@@ -10,18 +10,18 @@ const model = defineModel<File | null>();
 const isDragging = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-function onDragOver(e: DragEvent) {
+function handleDragOver(e: DragEvent) {
     e.preventDefault();
     isDragging.value = true;
 }
 
-function onDragLeave(e: DragEvent) {
+function handleDragLeave(e: DragEvent) {
     if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) {
         isDragging.value = false;
     }
 }
 
-function onDrop(e: DragEvent) {
+function handleDrop(e: DragEvent) {
     e.preventDefault();
     isDragging.value = false;
     const file = e.dataTransfer?.files?.[0];
@@ -38,9 +38,9 @@ function onFileChange(e: Event) {
     <label
         for="fileUpload"
         :aria-label="model ? `Selected file: ${model.name}. Click or drag to replace.` : 'File drop zone. Click or drag and drop a PDF to upload.'"
-        @dragover.prevent="onDragOver"
-        @dragleave="onDragLeave"
-        @drop="onDrop"
+        @dragover.prevent="handleDragOver"
+        @dragleave="handleDragLeave"
+        @drop="handleDrop"
         :class="[
             'relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed',
             'px-6 py-12 text-center cursor-pointer select-none transition-all duration-200',
@@ -58,10 +58,10 @@ function onFileChange(e: Event) {
             <span v-if="isDragging" aria-hidden="true" class="absolute inline-flex h-full w-full rounded-full bg-primary opacity-30 animate-ping" />
         </span>
         <span class="pointer-events-none">
-            <p class="text-sm font-semibold text-ink-secondary">
+            <p class="font-semibold text-ink-secondary">
                 {{ isDragging ? activeLabel : model ? model.name : idleLabel }}
             </p>
-            <p class="text-xs text-faint mt-1">{{ browseHint }}</p>
+            <p class="text-faint mt-1">{{ browseHint }}</p>
         </span>
 
         <input id="fileUpload" ref="fileInput" type="file" accept="application/pdf" class="hidden" @change="onFileChange" />

@@ -3,10 +3,92 @@ var content = (function() {
   function defineContentScript(definition2) {
     return definition2;
   }
+  const browser$1 = globalThis.browser?.runtime?.id ? globalThis.browser : globalThis.chrome;
+  const browser = browser$1;
   const definition = defineContentScript({
-    matches: ["*://*.google.com/*"],
-    main() {
-      console.log("Hello content.");
+    matches: ["*://*/*"],
+    main(ctx) {
+      const INSPECTOR_CLASS = "resume-extension-inspect";
+      let isInspectorActive = false;
+      let activeElements = /* @__PURE__ */ new Set();
+      let lastElement = null;
+      browser.runtime.sendMessage({
+        type: "TEXT_GRABBED",
+        data: getActiveText()
+      });
+      browser.runtime.onMessage.addListener((message) => {
+        if (message.type === "TOGGLE_INSPECT") {
+          isInspectorActive = !isInspectorActive;
+          if (!isInspectorActive) {
+            lastElement?.classList.remove(INSPECTOR_CLASS);
+            document.removeEventListener("mouseover", handleMouseOver);
+            document.removeEventListener("mouseleave", handleMouseLeave);
+            document.removeEventListener("click", handleClick);
+            clearActiveElements();
+          } else {
+            document.addEventListener("mouseover", handleMouseOver);
+            document.addEventListener("mouseleave", handleMouseLeave);
+            document.addEventListener("click", handleClick);
+          }
+        }
+      });
+      function handleMouseOver(event) {
+        const target = event.target;
+        if (target === lastElement) {
+          return;
+        }
+        if (lastElement && !activeElements.has(lastElement)) {
+          lastElement.classList.remove(INSPECTOR_CLASS);
+        }
+        if (!activeElements.has(target)) {
+          target.classList.add(INSPECTOR_CLASS);
+          lastElement = target;
+        }
+      }
+      function handleMouseLeave() {
+        if (lastElement && !activeElements.has(lastElement)) {
+          lastElement.classList.remove(INSPECTOR_CLASS);
+        }
+      }
+      function handleClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const target = event.target;
+        addActiveElement(target);
+        browser.runtime.sendMessage({
+          type: "TEXT_GRABBED",
+          data: getActiveText()
+        });
+      }
+      function addActiveElement(target) {
+        if (activeElements.has(target)) {
+          return;
+        }
+        for (const element of activeElements) {
+          if (element.contains(target)) {
+            removeActiveElement(target);
+          } else if (target.contains(element)) {
+            removeActiveElement(element);
+          }
+        }
+        target.classList.add(INSPECTOR_CLASS);
+        activeElements.add(target);
+      }
+      function removeActiveElement(target) {
+        target.classList.remove(INSPECTOR_CLASS);
+        activeElements.delete(target);
+      }
+      function clearActiveElements() {
+        for (let element of activeElements) {
+          removeActiveElement(element);
+        }
+      }
+      function getActiveText() {
+        const sorted = Array.from(activeElements).sort((a, b) => {
+          return a.compareDocumentPosition(b);
+        });
+        return sorted.map((element) => element.innerText || element.textContent);
+      }
     }
   });
   function print$1(method, ...args) {
@@ -19,8 +101,6 @@ var content = (function() {
     warn: (...args) => print$1(console.warn, ...args),
     error: (...args) => print$1(console.error, ...args)
   };
-  const browser$1 = globalThis.browser?.runtime?.id ? globalThis.browser : globalThis.chrome;
-  const browser = browser$1;
   var WxtLocationChangeEvent = class WxtLocationChangeEvent2 extends Event {
     static EVENT_NAME = getUniqueEventName("wxt:locationchange");
     constructor(newUrl, oldUrl) {
