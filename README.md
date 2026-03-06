@@ -1,7 +1,31 @@
-# WXT + Vue 3
+# Resume + Job Description Analyzer Chrome Extension
 
-This template should help get you started developing with Vue 3 in WXT.
+Paste your token, upload your resume, select the job description, then run an analysis to see how your resume matches up.
 
-## Recommended IDE Setup
+This extension runs locally and requires a [GitHub models](https://docs.github.com/en/github-models/use-github-models/prototyping-with-ai-models) token to be generated for private use.
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar).
+![screenshot 1](readme/screenshot-1.png)
+![screenshot 2](readme/screenshot-2.png)
+
+## Stack
+
+- WXT
+- Vue3
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+Attach debuggger to Chrome process in VSCode
+
+## Build and Usage
+
+```bash
+npm run build
+```
+
+1. Go to `chrome://extensions` and enable `Developer Mode`
+2. Load unpacked extension from `.output/chrome-mv3/`
