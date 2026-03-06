@@ -21,7 +21,9 @@ npm run dev
 
 Attach debuggger to Chrome process in VSCode
 
-## Build and Usage
+## Build & Usage
+
+Local
 
 ```bash
 npm run build
@@ -29,3 +31,5 @@ npm run build
 
 1. Go to `chrome://extensions` and enable `Developer Mode`
 2. Load unpacked extension from `.output/chrome-mv3/`
+
+Or download from `build` branch and load extension with the above steps.
