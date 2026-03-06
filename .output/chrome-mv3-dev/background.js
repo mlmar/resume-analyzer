@@ -9,10 +9,67 @@ var background = (function() {
   var MessageType = /* @__PURE__ */ ((MessageType2) => {
     MessageType2["Text"] = "GRAB_TEXT";
     MessageType2["Inspect"] = "TOGGLE_INSPECT";
+    MessageType2["Clear"] = "CLEAR_INSPECT";
     MessageType2["Reset"] = "RESET";
     MessageType2["Analyze"] = "ANALYZE";
+    MessageType2["FetchModels"] = "FETCH_MODELS";
+    MessageType2["Highlight"] = "HIGHLIGHT_SKILL";
     return MessageType2;
   })(MessageType || {});
+  const ANALYZE_MODEL = "gpt-4o-mini";
+  const matchSchema = {
+    type: "object",
+    properties: {
+      matchingSkills: {
+        type: "array",
+        items: { type: "string" },
+        description: "Skills, technologies, and qualifications found in both the resume and job description, using the job description's phrasing, ordered by relevance to the role"
+      },
+      missingSkills: {
+        type: "array",
+        items: { type: "string" },
+        description: "Skills, technologies, and qualifications required or preferred in the job description but absent from the resume, ordered by importance to the role"
+      },
+      level: {
+        type: "string",
+        description: "Candidate's inferred seniority level based on resume experience (e.g. Junior, Mid, Senior, Staff, Principal)"
+      },
+      salary: {
+        type: "string",
+        description: "Candidate's estimated competitive annual salary range in USD (e.g. '$120,000 - $150,000') based on this role's level, location, and role market rates"
+      },
+      matchScore: {
+        type: "number",
+        description: "A 0-100 match score where required skills are weighted more heavily than preferred skills; 70+ indicates the candidate meets most requirements"
+      },
+      summary: {
+        type: "string",
+        description: "2-4 sentence overview of the candidate's fit, key strengths relative to the role, and critical gaps"
+      }
+    },
+    required: ["matchingSkills", "missingSkills", "level", "salary", "matchScore", "summary"],
+    additionalProperties: false
+  };
+  function buildPrompt(resume, job) {
+    return [
+      `You are a technical recruiter and hiring expert. Analyze how well the candidate's resume matches the job description.`,
+      `Instructions:`,
+      `- Extract concrete skills, technologies, tools, certifications, and qualifications from both documents.`,
+      `- matchingSkills: Skills/technologies present in BOTH the resume and job description. Use the exact phrasing from the job description. Order by relevance to the role.`,
+      `- missingSkills: Skills/technologies required or preferred in the job description but NOT evidenced in the resume. Order by importance to the role.`,
+      `- Do NOT include soft skills (e.g. "communication", "teamwork") unless they are a core job requirement.`,
+      `- level: Infer the candidate's seniority from their resume (e.g. "Junior", "Mid", "Senior", "Staff", "Principal"). Base this on years of experience, scope of past roles, and technical depth.`,
+      `- salary: Estimate a competitive annual salary range in USD (e.g. "$120,000 - $150,000") based on the inferred level, location if mentioned, and market rates for the role.`,
+      `- matchScore: A 0-100 score. Weight required skills more heavily than preferred/nice-to-have skills. A score of 70+ means the candidate meets most requirements.`,
+      `- summary: 2-4 sentences covering the candidate's fit, key strengths relative to the role, and the most critical gaps.`,
+      `<Resume>
+${resume}
+</Resume>`,
+      `<Job Description>
+${job}
+</Job Description>`
+    ].join("\n");
+  }
   const definition = defineBackground(() => {
     browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => console.error("Error setting panel behavior:", error));
     browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -20,31 +77,27 @@ var background = (function() {
         browser.runtime.sendMessage({ type: MessageType.Reset });
       }
     });
+    let lastActiveTabId = null;
+    browser.tabs.onActivated.addListener((activeInfo) => {
+      if (lastActiveTabId != null) {
+        browser.tabs.sendMessage(lastActiveTabId, { type: MessageType.Inspect, data: false }).catch(() => {
+          console.error("Resume-Extension: Failed to disable toggle mode for previous tab");
+        });
+        browser.tabs.sendMessage(lastActiveTabId, { type: MessageType.Clear }).catch(() => {
+          console.error("Resume-Extension: Failed to clear selections for previous tab");
+        });
+      }
+      lastActiveTabId = activeInfo.tabId;
+      browser.runtime.sendMessage({ type: MessageType.Reset }).catch(() => {
+        console.error("Resume-Extension: Failed to reset UI");
+      });
+    });
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.type === MessageType.Analyze) {
         async function fetchGithubModelResponse() {
           try {
             const payload = message.data;
-            const matchSchema = {
-              type: "object",
-              properties: {
-                matchScore: { type: "number", description: "A score from 0-100" },
-                matchingSkills: { type: "array", items: { type: "string" } },
-                missingSkills: { type: "array", items: { type: "string" } },
-                summary: { type: "string" }
-              },
-              required: ["matchScore", "matchingSkills", "missingSkills", "summary"],
-              additionalProperties: false
-            };
-            let prompt = "Compare my resume to this job description:";
-            prompt += `<Resume>
- ${payload.resume} 
-</Resume>
-`;
-            prompt += `<Job Description>
- ${payload.job} 
-</Job Description>
-`;
+            const prompt = buildPrompt(payload.resume, payload.job);
             const response = await fetch("https://models.inference.ai.azure.com/chat/completions", {
               method: "POST",
               headers: {
@@ -62,17 +115,42 @@ var background = (function() {
                     // The schema we defined above
                   }
                 },
-                model: "gpt-4o"
+                model: payload.model ?? ANALYZE_MODEL
               })
             });
             const data = await response.json();
             sendResponse({ success: true, data });
           } catch (error) {
             console.error("AI Fetch Error:", error);
-            sendResponse({ success: false, error: "Failed" });
+            sendResponse({ success: false, error: "Failed to fetch analysis" });
           }
         }
         fetchGithubModelResponse();
+        return true;
+      }
+      if (message.type === MessageType.FetchModels) {
+        async function fetchCatalogModels() {
+          try {
+            const { token } = message.data;
+            const response = await fetch("https://models.github.ai/catalog/models", {
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+              }
+            });
+            if (!response.ok) {
+              sendResponse({ success: false, error: `HTTP ${response.status}` });
+              return;
+            }
+            const data = await response.json();
+            sendResponse({ success: true, data });
+          } catch (error) {
+            console.error("FetchModels Error:", error);
+            sendResponse({ success: false, error: "Failed to fetch models" });
+          }
+        }
+        fetchCatalogModels();
         return true;
       }
     });

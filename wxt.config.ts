@@ -16,7 +16,8 @@ export default defineConfig({
     manifest: {
         permissions: ["storage"],
         host_permissions: [
-            "https://models.inference.ai.azure.com/*"
+            "https://models.inference.ai.azure.com/*",
+            "https://models.github.ai/*"
         ]
     },
     modules: ['@wxt-dev/module-vue'],

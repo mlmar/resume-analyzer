@@ -2,6 +2,10 @@
 .resume-extension-inspect {
   outline: 0.1rem solid #3b82f6 !important;
   outline-offset: -0.05rem !important;
-  cursor: crosshair !important;
   background-color: #ddeaff !important;
+}
+.resume-extension-highlight {
+  outline: 0.1rem solid #fb923c !important;
+  outline-offset: -0.05rem !important;
+  background-color: #fef3c7 !important;
 }

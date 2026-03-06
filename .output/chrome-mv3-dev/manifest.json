@@ -18,6 +18,7 @@
   ],
   "host_permissions": [
     "https://models.inference.ai.azure.com/*",
+    "https://models.github.ai/*",
     "*://*/*",
     "http://localhost/*"
   ],

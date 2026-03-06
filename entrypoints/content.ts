@@ -4,11 +4,18 @@ import './content-style.less'; // Add a .highlight-box { outline: 2px solid blue
 export default defineContentScript({
     matches: ['*://*/*'],
     main(ctx) {
-        const INSPECTOR_CLASS = 'resume-extension-inspect'
+        const INSPECTOR_CLASS = 'resume-extension-inspect';
+        const INSPECTOR_CURSOR = 'crosshair';
+        const HIGHLIGHT_CLASS = 'resume-extension-highlight';
 
         let isInspectorActive = false;
         let activeElements = new Set<HTMLElement>()
         let lastElement: HTMLElement | null = null;
+        let highlightedElements = new Set<HTMLElement>();
+
+        // Remove all elements on load
+        document.querySelectorAll(INSPECTOR_CLASS).forEach((element) => element.classList.remove(INSPECTOR_CLASS));
+        document.querySelectorAll(HIGHLIGHT_CLASS).forEach((element) => element.classList.remove(HIGHLIGHT_CLASS));
 
         browser.runtime.sendMessage({
             type: MessageType.Inspect,
@@ -22,20 +29,26 @@ export default defineContentScript({
 
         browser.runtime.onMessage.addListener((message) => {
             if (message.type === MessageType.Inspect) {
-                isInspectorActive = !isInspectorActive;
+                isInspectorActive = message.data ?? !isInspectorActive;
                 if (!isInspectorActive) {
-                    lastElement?.classList.remove(INSPECTOR_CLASS);
+                    if (lastElement && !activeElements.has(lastElement)) {
+                        lastElement?.classList.remove(INSPECTOR_CLASS);
+                    }
 
+                    document.body.style.cursor = '';
                     document.removeEventListener('mouseover', handleMouseOver);
                     document.removeEventListener('mouseleave', handleMouseLeave);
                     document.removeEventListener('click', handleClick);
-
-                    clearActiveElements();
                 } else {
+                    document.body.style.cursor = INSPECTOR_CURSOR;
                     document.addEventListener('mouseover', handleMouseOver);
                     document.addEventListener('mouseleave', handleMouseLeave);
                     document.addEventListener('click', handleClick);
                 }
+            } else if (message.type === MessageType.Clear) {
+                clearActiveElements();
+            } else if (message.type === MessageType.Highlight) {
+                highlightSkill(message.data as string);
             }
         });
 
@@ -107,6 +120,38 @@ export default defineContentScript({
                 return a.compareDocumentPosition(b);
             })
             return sorted.map(element => element.innerText || element.textContent)
+        }
+
+        function highlightSkill(skill: string) {
+            // Clear previous highlights
+            for (const element of highlightedElements) {
+                element.classList.remove(HIGHLIGHT_CLASS);
+                highlightedElements.delete(element);
+            }
+
+            if (!skill) {
+                return;
+            }
+
+            const lowerSkill = skill.toLowerCase();
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let firstMatch: HTMLElement | null = null;
+
+            while (walker.nextNode()) {
+                const textNode = walker.currentNode;
+                if (textNode.textContent && textNode.textContent.toLowerCase().includes(lowerSkill)) {
+                    const parent = textNode.parentElement;
+                    if (parent) {
+                        parent.classList.add(HIGHLIGHT_CLASS);
+                        highlightedElements.add(parent);
+                        if (!firstMatch) firstMatch = parent;
+                    }
+                }
+            }
+
+            if (firstMatch) {
+                firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     },
 });

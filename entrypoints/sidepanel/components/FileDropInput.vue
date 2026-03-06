@@ -1,14 +1,17 @@
 <script lang="ts" setup>
-defineProps<{
+const props = defineProps<{
     idleLabel: string;
     activeLabel: string;
     browseHint: string;
 }>();
 
-const model = defineModel<File | null>();
+const emit = defineEmits<{
+    select: [file: File];
+}>();
 
 const isDragging = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
+const fileName = ref<string | null>(null);
 
 function handleDragOver(e: DragEvent) {
     e.preventDefault();
@@ -25,19 +28,25 @@ function handleDrop(e: DragEvent) {
     e.preventDefault();
     isDragging.value = false;
     const file = e.dataTransfer?.files?.[0];
-    if (file) model.value = file;
+    if (file) {
+        fileName.value = file.name;
+        emit('select', file);
+    }
 }
 
 function onFileChange(e: Event) {
     const file = (e.target as HTMLInputElement).files?.[0];
-    if (file) model.value = file;
+    if (file) {
+        fileName.value = file.name;
+        emit('select', file);
+    }
 }
 </script>
 
 <template>
     <label
         for="fileUpload"
-        :aria-label="model ? `Selected file: ${model.name}. Click or drag to replace.` : 'File drop zone. Click or drag and drop a PDF to upload.'"
+        :aria-label="fileName ? `Selected file: ${fileName}. Click or drag to replace.` : 'File drop zone. Click or drag and drop a PDF to upload.'"
         @dragover.prevent="handleDragOver"
         @dragleave="handleDragLeave"
         @drop="handleDrop"
@@ -51,7 +60,7 @@ function onFileChange(e: Event) {
             <i
                 :class="[
                     'pi text-4xl transition-transform duration-300',
-                    isDragging ? 'pi-cloud-download scale-125 text-primary' : model ? 'pi-file text-primary' : 'pi-folder-open text-muted',
+                    isDragging ? 'pi-cloud-download scale-125 text-primary' : fileName ? 'pi-file text-primary' : 'pi-folder-open text-muted',
                 ]"
                 aria-hidden="true"
             />
@@ -59,7 +68,7 @@ function onFileChange(e: Event) {
         </span>
         <span class="pointer-events-none">
             <p class="font-semibold text-ink-secondary">
-                {{ isDragging ? activeLabel : model ? model.name : idleLabel }}
+                {{ isDragging ? activeLabel : fileName ? fileName : idleLabel }}
             </p>
             <p class="text-faint mt-1">{{ browseHint }}</p>
         </span>

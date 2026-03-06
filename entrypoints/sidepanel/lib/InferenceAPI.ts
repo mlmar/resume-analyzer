@@ -1,11 +1,6 @@
+import { GithubModelResponse } from "@/entrypoints/types/GithubModelResponse";
 import { Message, MessageType } from "@/entrypoints/types/Message";
 
-export type GithubModelResponse = {
-    matchScore: string,
-    matchingSkills: string[],
-    missingSkills: string[],
-    summary: string
-}
 
 export class InferenceAPI {
     static async prompt(props: Message<MessageType.Analyze>['data']): Promise<GithubModelResponse> {
@@ -17,7 +12,8 @@ export class InferenceAPI {
 
         if (response.success) {
             if (response.data.error) {
-                throw new Error(response.data.message);
+                console.error("AI Error:", response.data.error);
+                throw new Error(response.data.error.message);
             }
             return JSON.parse(response.data.choices[0].message.content) as GithubModelResponse;
         } else {

@@ -23,6 +23,18 @@
     --color-ink-secondary: var(--color-gray-700);
     --color-muted: var(--color-gray-500);
     --color-faint: var(--color-gray-400);
+
+    /* Highlight */
+    --color-highlight: var(--color-amber-100);
+    --color-highlight-border: var(--color-orange-400);
+    --color-highlight-text: var(--color-amber-900);
+    --color-highlight-hover: var(--color-amber-50);
+
+    /* Match Score */
+    --color-score-high: var(--color-green-500);
+    --color-score-medium: var(--color-yellow-500);
+    --color-score-low: var(--color-orange-500);
+    --color-score-poor: var(--color-red-500);
 }
 
 :root {

@@ -27,6 +27,16 @@ export class InspectAPI {
         await browser.tabs.sendMessage(tab.id!, { type: MessageType.Inspect });
     }
 
+    static async clear() {
+        const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+        await browser.tabs.sendMessage(tab.id!, { type: MessageType.Clear });
+    }
+
+    static async highlight(skill: string | null) {
+        const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+        await browser.tabs.sendMessage(tab.id!, { type: MessageType.Highlight, data: skill });
+    }
+
     static addListener<K extends MessageType>(key: K, callback: Callback<MessageDataMap[K]>) {
         const callbacks = callbacksMap.get(key) ?? new Set();
         callbacksMap.set(key, callbacks as Set<Callback<never>>);

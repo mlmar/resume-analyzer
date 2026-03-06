@@ -8,17 +8,25 @@ var content = (function() {
   var MessageType = /* @__PURE__ */ ((MessageType2) => {
     MessageType2["Text"] = "GRAB_TEXT";
     MessageType2["Inspect"] = "TOGGLE_INSPECT";
+    MessageType2["Clear"] = "CLEAR_INSPECT";
     MessageType2["Reset"] = "RESET";
     MessageType2["Analyze"] = "ANALYZE";
+    MessageType2["FetchModels"] = "FETCH_MODELS";
+    MessageType2["Highlight"] = "HIGHLIGHT_SKILL";
     return MessageType2;
   })(MessageType || {});
   const definition = defineContentScript({
     matches: ["*://*/*"],
     main(ctx) {
       const INSPECTOR_CLASS = "resume-extension-inspect";
+      const INSPECTOR_CURSOR = "crosshair";
+      const HIGHLIGHT_CLASS = "resume-extension-highlight";
       let isInspectorActive = false;
       let activeElements = /* @__PURE__ */ new Set();
       let lastElement = null;
+      let highlightedElements = /* @__PURE__ */ new Set();
+      document.querySelectorAll(INSPECTOR_CLASS).forEach((element) => element.classList.remove(INSPECTOR_CLASS));
+      document.querySelectorAll(HIGHLIGHT_CLASS).forEach((element) => element.classList.remove(HIGHLIGHT_CLASS));
       browser.runtime.sendMessage({
         type: MessageType.Inspect,
         data: true
@@ -29,18 +37,25 @@ var content = (function() {
       });
       browser.runtime.onMessage.addListener((message) => {
         if (message.type === MessageType.Inspect) {
-          isInspectorActive = !isInspectorActive;
+          isInspectorActive = message.data ?? !isInspectorActive;
           if (!isInspectorActive) {
-            lastElement?.classList.remove(INSPECTOR_CLASS);
+            if (lastElement && !activeElements.has(lastElement)) {
+              lastElement?.classList.remove(INSPECTOR_CLASS);
+            }
+            document.body.style.cursor = "";
             document.removeEventListener("mouseover", handleMouseOver);
             document.removeEventListener("mouseleave", handleMouseLeave);
             document.removeEventListener("click", handleClick);
-            clearActiveElements();
           } else {
+            document.body.style.cursor = INSPECTOR_CURSOR;
             document.addEventListener("mouseover", handleMouseOver);
             document.addEventListener("mouseleave", handleMouseLeave);
             document.addEventListener("click", handleClick);
           }
+        } else if (message.type === MessageType.Clear) {
+          clearActiveElements();
+        } else if (message.type === MessageType.Highlight) {
+          highlightSkill(message.data);
         }
       });
       function handleMouseOver(event) {
@@ -98,6 +113,32 @@ var content = (function() {
           return a.compareDocumentPosition(b);
         });
         return sorted.map((element) => element.innerText || element.textContent);
+      }
+      function highlightSkill(skill) {
+        for (const element of highlightedElements) {
+          element.classList.remove(HIGHLIGHT_CLASS);
+          highlightedElements.delete(element);
+        }
+        if (!skill) {
+          return;
+        }
+        const lowerSkill = skill.toLowerCase();
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let firstMatch = null;
+        while (walker.nextNode()) {
+          const textNode = walker.currentNode;
+          if (textNode.textContent && textNode.textContent.toLowerCase().includes(lowerSkill)) {
+            const parent = textNode.parentElement;
+            if (parent) {
+              parent.classList.add(HIGHLIGHT_CLASS);
+              highlightedElements.add(parent);
+              if (!firstMatch) firstMatch = parent;
+            }
+          }
+        }
+        if (firstMatch) {
+          firstMatch.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
       }
     }
   });
