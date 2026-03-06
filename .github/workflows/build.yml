@@ -1,4 +1,4 @@
-name: Build Extension
+name: Build Output
 
 on:
     push:
@@ -22,6 +22,7 @@ jobs:
             - name: Publish build to branch
               uses: peaceiris/actions-gh-pages@v4
               with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
                   publish_dir: .output/chrome-mv3
                   publish_branch: build
                   force_orphan: true
