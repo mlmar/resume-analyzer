@@ -1,3 +1,4 @@
+import { MessageType } from '@/entrypoints/types/Message';
 import './content-style.less'; // Add a .highlight-box { outline: 2px solid blue; } class here
 
 export default defineContentScript({
@@ -10,12 +11,17 @@ export default defineContentScript({
         let lastElement: HTMLElement | null = null;
 
         browser.runtime.sendMessage({
-            type: 'TEXT_GRABBED',
+            type: MessageType.Inspect,
+            data: true
+        });
+
+        browser.runtime.sendMessage({
+            type: MessageType.Text,
             data: getActiveText()
         });
 
         browser.runtime.onMessage.addListener((message) => {
-            if (message.type === 'TOGGLE_INSPECT') {
+            if (message.type === MessageType.Inspect) {
                 isInspectorActive = !isInspectorActive;
                 if (!isInspectorActive) {
                     lastElement?.classList.remove(INSPECTOR_CLASS);
@@ -62,23 +68,22 @@ export default defineContentScript({
             event.stopPropagation();
 
             const target = event.target as HTMLElement;
-            addActiveElement(target);
+            if (activeElements.has(target)) {
+                removeActiveElement(target);
+            } else {
+                addActiveElement(target);
+            }
 
             // Send the text back to your Sidepanel
             browser.runtime.sendMessage({
-                type: 'TEXT_GRABBED',
+                type: MessageType.Text,
                 data: getActiveText()
             });
         }
 
         function addActiveElement(target: HTMLElement): void {
-            if (activeElements.has(target)) {
-                return;
-            }
             for (const element of activeElements) {
-                if (element.contains(target)) {
-                    removeActiveElement(target);
-                } else if (target.contains(element)) {
+                if (element.contains(target) || target.contains(element)) {
                     removeActiveElement(element);
                 }
             }

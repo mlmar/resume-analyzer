@@ -5,6 +5,13 @@ var content = (function() {
   }
   const browser$1 = globalThis.browser?.runtime?.id ? globalThis.browser : globalThis.chrome;
   const browser = browser$1;
+  var MessageType = /* @__PURE__ */ ((MessageType2) => {
+    MessageType2["Text"] = "GRAB_TEXT";
+    MessageType2["Inspect"] = "TOGGLE_INSPECT";
+    MessageType2["Reset"] = "RESET";
+    MessageType2["Analyze"] = "ANALYZE";
+    return MessageType2;
+  })(MessageType || {});
   const definition = defineContentScript({
     matches: ["*://*/*"],
     main(ctx) {
@@ -13,11 +20,15 @@ var content = (function() {
       let activeElements = /* @__PURE__ */ new Set();
       let lastElement = null;
       browser.runtime.sendMessage({
-        type: "TEXT_GRABBED",
+        type: MessageType.Inspect,
+        data: true
+      });
+      browser.runtime.sendMessage({
+        type: MessageType.Text,
         data: getActiveText()
       });
       browser.runtime.onMessage.addListener((message) => {
-        if (message.type === "TOGGLE_INSPECT") {
+        if (message.type === MessageType.Inspect) {
           isInspectorActive = !isInspectorActive;
           if (!isInspectorActive) {
             lastElement?.classList.remove(INSPECTOR_CLASS);
@@ -54,20 +65,19 @@ var content = (function() {
         event.preventDefault();
         event.stopPropagation();
         const target = event.target;
-        addActiveElement(target);
+        if (activeElements.has(target)) {
+          removeActiveElement(target);
+        } else {
+          addActiveElement(target);
+        }
         browser.runtime.sendMessage({
-          type: "TEXT_GRABBED",
+          type: MessageType.Text,
           data: getActiveText()
         });
       }
       function addActiveElement(target) {
-        if (activeElements.has(target)) {
-          return;
-        }
         for (const element of activeElements) {
-          if (element.contains(target)) {
-            removeActiveElement(target);
-          } else if (target.contains(element)) {
+          if (element.contains(target) || target.contains(element)) {
             removeActiveElement(element);
           }
         }

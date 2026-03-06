@@ -1,13 +1,10 @@
-type Callback = (data: string[]) => void;
-type Message = {
-    type: string,
-    data: string[]
-}
+import { Message, MessageDataMap, MessageType } from "@/entrypoints/types/Message";
 
-const callbacks = new Set<Callback>();
+type Callback<T> = (data: T) => void;
+
+const callbacksMap = new Map<MessageType, Set<Callback<never>>>();
 
 export class InspectAPI {
-
     static open() {
         browser.runtime.onMessage.addListener(this.#listener);
     }
@@ -17,23 +14,26 @@ export class InspectAPI {
     }
 
     static #listener(message: Message) {
-        if (message.type === 'TEXT_GRABBED') {
+        const callbacks = callbacksMap.get(message.type);
+        if (callbacks) {
             for (const callback of callbacks) {
-                callback(message.data);
+                callback(message.data as never);
             }
         }
     }
 
     static async toggle() {
         const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-        await browser.tabs.sendMessage(tab.id!, { type: 'TOGGLE_INSPECT' });
-    };
-
-    static addListener(callback: Callback) {
-        callbacks.add(callback);
+        await browser.tabs.sendMessage(tab.id!, { type: MessageType.Inspect });
     }
 
-    static removeListener(callback: Callback) {
-        callbacks.delete(callback);
+    static addListener<K extends MessageType>(key: K, callback: Callback<MessageDataMap[K]>) {
+        const callbacks = callbacksMap.get(key) ?? new Set();
+        callbacksMap.set(key, callbacks as Set<Callback<never>>);
+        callbacks.add(callback as Callback<never>);
+    }
+
+    static removeListener<K extends MessageType>(key: K, callback: Callback<MessageDataMap[K]>) {
+        callbacksMap.get(key)?.delete(callback as Callback<never>);
     }
 }

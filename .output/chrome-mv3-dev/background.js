@@ -6,12 +6,25 @@ var background = (function() {
   }
   const browser$1 = globalThis.browser?.runtime?.id ? globalThis.browser : globalThis.chrome;
   const browser = browser$1;
+  var MessageType = /* @__PURE__ */ ((MessageType2) => {
+    MessageType2["Text"] = "GRAB_TEXT";
+    MessageType2["Inspect"] = "TOGGLE_INSPECT";
+    MessageType2["Reset"] = "RESET";
+    MessageType2["Analyze"] = "ANALYZE";
+    return MessageType2;
+  })(MessageType || {});
   const definition = defineBackground(() => {
     browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => console.error("Error setting panel behavior:", error));
+    browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+      if (changeInfo.status === "loading") {
+        browser.runtime.sendMessage({ type: MessageType.Reset });
+      }
+    });
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (message.type === "CALL_GITHUB_AI") {
+      if (message.type === MessageType.Analyze) {
         async function fetchGithubModelResponse() {
           try {
+            const payload = message.data;
             const matchSchema = {
               type: "object",
               properties: {
@@ -25,18 +38,18 @@ var background = (function() {
             };
             let prompt = "Compare my resume to this job description:";
             prompt += `<Resume>
- ${message.resume} 
+ ${payload.resume} 
 </Resume>
 `;
             prompt += `<Job Description>
- ${message.job} 
+ ${payload.job} 
 </Job Description>
 `;
             const response = await fetch("https://models.inference.ai.azure.com/chat/completions", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${message.token}`
+                "Authorization": `Bearer ${payload.token}`
               },
               body: JSON.stringify({
                 messages: [{ role: "user", content: prompt }],

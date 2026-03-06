@@ -1,3 +1,5 @@
+import { Message, MessageType } from "@/entrypoints/types/Message";
+
 export type GithubModelResponse = {
     matchScore: string,
     matchingSkills: string[],
@@ -6,11 +8,11 @@ export type GithubModelResponse = {
 }
 
 export class InferenceAPI {
-    static async prompt(props: { resume: string, job: string, token: string }): Promise<GithubModelResponse> {
+    static async prompt(props: Message<MessageType.Analyze>['data']): Promise<GithubModelResponse> {
         // browser is globally available in WXT
         const response = await browser.runtime.sendMessage({
-            type: 'CALL_GITHUB_AI',
-            ...props
+            type: MessageType.Analyze,
+            data: props
         });
 
         if (response.success) {

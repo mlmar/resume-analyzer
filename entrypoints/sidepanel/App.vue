@@ -4,7 +4,8 @@ import { PDFUtil } from '@/entrypoints/sidepanel/lib/PDFUtil';
 import FileDropInput from '@/entrypoints/sidepanel/components/FileDropInput.vue';
 import StatusCard from '@/entrypoints/sidepanel/components/StatusCard.vue';
 import { InspectAPI } from '@/entrypoints/sidepanel/lib/InspectAPI';
-import { useChromeStorage } from '@/entrypoints/composables/useChromeStorage';
+import { MessageType } from '@/entrypoints/types/Message';
+import { useChromeStorage } from '@/entrypoints/sidepanel/composables/useChromeStorage';
 
 const token = useChromeStorage<string>('token', '');
 const selectedFile = useChromeStorage<File | null>('selected-file', null);
@@ -13,6 +14,13 @@ const isDone = ref(false);
 const error = ref('');
 const jobText = ref<string[]>([]);
 const analysis = ref<GithubModelResponse | null>(null);
+const isInspecting = ref(false);
+
+const styles = {
+    header: 'font-semibold text-muted uppercase',
+    analysisItem: 'flex flex-col gap-3 bg-surface border border-border-strong rounded-xl px-4 py-3 text-ink',
+    analysisItemHeader: 'text-xl font-semibold text-muted uppercase',
+};
 
 const statusVariant = computed<'processing' | 'done' | 'error' | null>(() => {
     if (error.value) return 'error';
@@ -28,7 +36,16 @@ const statusLabel = computed(() => {
     return undefined;
 });
 
-async function handleSubmit(event: SubmitEvent) {
+function handleReset() {
+    isProcessing.value = false;
+    isDone.value = false;
+    error.value = '';
+    jobText.value = [];
+    analysis.value = null;
+    isInspecting.value = false;
+}
+
+async function handleSubmit() {
     if (!selectedFile.value || !jobText.value.length) {
         return;
     }
@@ -53,9 +70,8 @@ async function handleSubmit(event: SubmitEvent) {
     }
 }
 
-const isInspecting = ref(false);
-function handleToggleInspect() {
-    isInspecting.value = !isInspecting.value;
+function handleToggleInspect(toggled?: boolean) {
+    isInspecting.value = toggled ?? !isInspecting.value;
     jobText.value = [];
     InspectAPI.toggle();
 }
@@ -66,7 +82,8 @@ function handleInspectSelect(text: string[]) {
 
 onMounted(() => {
     InspectAPI.open();
-    InspectAPI.addListener(handleInspectSelect);
+    InspectAPI.addListener(MessageType.Reset, handleReset);
+    InspectAPI.addListener(MessageType.Text, handleInspectSelect);
 });
 
 onUnmounted(() => {
@@ -89,7 +106,7 @@ onUnmounted(() => {
         <section class="overflow-y-auto flex flex-col">
             <form class="flex flex-col gap-4 p-4" aria-label="Resume analyzer" @submit.prevent="handleSubmit">
                 <div class="flex flex-col gap-1.5">
-                    <label for="token" class="font-semibold text-muted uppercase">GitHub Model Token</label>
+                    <label for="token" :class="styles.header">GitHub Model Token</label>
                     <input
                         id="token"
                         type="password"
@@ -111,10 +128,10 @@ onUnmounted(() => {
                 <button
                     class="rounded-2xl border-1 border-border bg-ink text-white p-2 cursor-pointer ring-2 hover:ring-primary/20 transition-all hover:bg-muted"
                     :class="{ isInspecting: 'ring-primary/20' }"
-                    @click="handleToggleInspect"
+                    @click="() => handleToggleInspect()"
                     type="button"
                 >
-                    {{ isInspecting ? 'Clear ' + jobText.length + ' Elements' : 'Highlight Job Description' }}
+                    {{ isInspecting ? 'Clear ' + jobText.length + ' Elements' : 'Select Job Description' }}
                 </button>
                 <button
                     class="rounded-2xl border-1 border-border bg-ink text-white p-2 cursor-pointer ring-2 hover:ring-primary/20 transition-all hover:bg-muted disabled:opacity-50 disabled:pointer-events-none"
@@ -125,13 +142,25 @@ onUnmounted(() => {
                 </button>
             </form>
             <section class="flex flex-col gap-1 p-4">
-                <h2 for="token" class="font-semibold text-muted uppercase">Analysis</h2>
-                <article class="flex flex-col gap-2 bg-surface border border-border-strong rounded-xl px-3 py-2.5 text-ink">
-                    <p>Match Score: {{ analysis?.matchScore }}</p>
-                    <p>Matching Skills: {{ analysis?.matchingSkills }}</p>
-                    <p>Missing Skills: {{ analysis?.missingSkills }}</p>
-                    <p>Summary: {{ analysis?.summary }}</p>
-                </article>
+                <h2 :class="styles.header">Analysis</h2>
+                <ul class="flex flex-col gap-4">
+                    <li :class="styles.analysisItem">
+                        <span :class="styles.header">Match Score</span>
+                        <span>{{ analysis?.matchScore }}</span>
+                    </li>
+                    <li :class="styles.analysisItem">
+                        <span :class="styles.header">Matching Skills</span>
+                        <span>{{ analysis?.matchingSkills }}</span>
+                    </li>
+                    <li :class="styles.analysisItem">
+                        <span :class="styles.header">Missing Skills</span>
+                        <span>{{ analysis?.missingSkills }}</span>
+                    </li>
+                    <li :class="styles.analysisItem">
+                        <span :class="styles.header">Summary</span>
+                        <span>{{ analysis?.summary }}</span>
+                    </li>
+                </ul>
             </section>
         </section>
     </main>

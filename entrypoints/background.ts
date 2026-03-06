@@ -1,12 +1,22 @@
+import { Message, MessageType } from "@/entrypoints/types/Message";
+
 export default defineBackground(() => {
     browser.sidePanel
         .setPanelBehavior({ openPanelOnActionClick: true })
         .catch((error) => console.error("Error setting panel behavior:", error));
 
-    browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.type === 'CALL_GITHUB_AI') {
+    browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (changeInfo.status === 'loading') {
+            browser.runtime.sendMessage({ type: MessageType.Reset })
+        }
+    });
+
+    browser.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
+        if (message.type === MessageType.Analyze) {
             async function fetchGithubModelResponse() {
                 try {
+                    const payload = (message as Message<MessageType.Analyze>).data
+
                     const matchSchema = {
                         type: "object",
                         properties: {
@@ -20,14 +30,14 @@ export default defineBackground(() => {
                     };
 
                     let prompt = 'Compare my resume to this job description:';
-                    prompt += `<Resume>\n ${message.resume} \n</Resume>\n`;
-                    prompt += `<Job Description>\n ${message.job} \n</Job Description>\n`;
+                    prompt += `<Resume>\n ${payload.resume} \n</Resume>\n`;
+                    prompt += `<Job Description>\n ${payload.job} \n</Job Description>\n`;
 
                     const response = await fetch("https://models.inference.ai.azure.com/chat/completions", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": `Bearer ${message.token}`
+                            "Authorization": `Bearer ${payload.token}`
                         },
                         body: JSON.stringify({
                             messages: [{ role: "user", content: prompt }],
