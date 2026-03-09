@@ -1,7 +1,7 @@
 import { GitHubCatalogModel } from '@/entrypoints/types/GitHubCatalogModel';
 import { MessageType } from '@/entrypoints/types/Message';
 import { useChromeStorage } from '@/entrypoints/sidepanel/composables/useChromeStorage';
-import { ANALYZE_MODEL } from '@/entrypoints/lib/analyzeConfig';
+import { ANALYZE_MODEL } from '@/entrypoints/config/analyzeConfig';
 
 export function useGitHubModels(token: Ref<string>) {
     const models = ref<GitHubCatalogModel[]>([]);

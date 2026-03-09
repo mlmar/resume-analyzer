@@ -1,7 +1,7 @@
 import { GithubModelResponse } from "@/entrypoints/types/GithubModelResponse";
 import { GitHubCatalogModel } from "@/entrypoints/types/GitHubCatalogModel";
 import { Message, MessageType } from "@/entrypoints/types/Message";
-import { ANALYZE_MODEL, buildPrompt, matchSchema } from "@/entrypoints/lib/analyzeConfig";
+import { ANALYZE_MODEL, buildPrompt, matchSchema } from "@/entrypoints/config/analyzeConfig";
 
 export default defineBackground(() => {
     browser.sidePanel

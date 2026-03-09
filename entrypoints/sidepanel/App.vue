@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { InferenceAPI } from '@/entrypoints/sidepanel/lib/InferenceAPI';
-import { InspectAPI } from '@/entrypoints/sidepanel/lib/InspectAPI';
+import { Inspector } from '@/entrypoints/sidepanel/lib/Inspector';
 import { PDFUtil } from '@/entrypoints/sidepanel/lib/PDFUtil';
 import { MessageType } from '@/entrypoints/types/Message';
 import { useChromeStorage } from '@/entrypoints/sidepanel/composables/useChromeStorage';
@@ -34,6 +34,8 @@ const jobText = ref<string[]>([]);
 const analysis = ref<GithubModelResponse | null>(null);
 const isInspecting = ref(false);
 const activeSkill = ref<string | null>(null);
+
+const inspector = new Inspector();
 
 // Status states
 const statusVariant = computed<'processing' | 'done' | 'error' | null>(() => {
@@ -96,13 +98,13 @@ function handleResumeFileChange(file: File) {
 // Toggles selection mmode
 function handleToggleInspect() {
     isInspecting.value = !isInspecting.value;
-    InspectAPI.toggle();
+    inspector.toggle();
 }
 
 // Clears selected text and state
 function handleClearInspect() {
     jobText.value = [];
-    InspectAPI.clear();
+    inspector.clear();
 }
 
 // Adds selected text to state
@@ -114,21 +116,21 @@ function handleSelectInspect(text: string[]) {
 function handleSkillClick(skill: string) {
     if (activeSkill.value === skill) {
         activeSkill.value = null;
-        InspectAPI.highlight(null);
+        inspector.highlight(null);
     } else {
         activeSkill.value = skill;
-        InspectAPI.highlight(skill);
+        inspector.highlight(skill);
     }
 }
 
 onMounted(() => {
-    InspectAPI.open();
-    InspectAPI.addListener(MessageType.Reset, handleReset);
-    InspectAPI.addListener(MessageType.Text, handleSelectInspect);
+    inspector.open();
+    inspector.addListener(MessageType.Reset, handleReset);
+    inspector.addListener(MessageType.Text, handleSelectInspect);
 });
 
 onUnmounted(() => {
-    InspectAPI.close();
+    inspector.close();
 });
 </script>
 

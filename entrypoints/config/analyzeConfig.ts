@@ -11,7 +11,7 @@ export const matchSchema = {
         missingSkills: {
             type: "array",
             items: { type: "string" },
-            description: "Skills, technologies, and qualifications required or preferred in the job description but absent from the resume, ordered by importance to the role"
+            description: "Skills, technologies, and qualifications required or preferred in the job description but absent from the resume, using the job description's phrasing, ordered by importance to the role. "
         },
         level: {
             type: "string",
@@ -40,7 +40,7 @@ export function buildPrompt(resume: string, job: string) {
         `Instructions:`,
         `- Extract concrete skills, technologies, tools, certifications, and qualifications from both documents.`,
         `- matchingSkills: Skills/technologies present in BOTH the resume and job description. Use the exact phrasing from the job description. Order by relevance to the role.`,
-        `- missingSkills: Skills/technologies required or preferred in the job description but NOT evidenced in the resume. Order by importance to the role.`,
+        `- missingSkills: Skills/technologies required or preferred in the job description but NOT evidenced in the resume. Use the exact phrasing from the job description. Order by importance to the role.`,
         `- Do NOT include soft skills (e.g. "communication", "teamwork") unless they are a core job requirement.`,
         `- level: Infer the candidate's seniority from their resume (e.g. "Junior", "Mid", "Senior", "Staff", "Principal"). Base this on years of experience, scope of past roles, and technical depth.`,
         `- salary: Estimate a competitive annual salary range in USD (e.g. "$120,000 - $150,000") based on the inferred level, location if mentioned, and market rates for the role.`,
