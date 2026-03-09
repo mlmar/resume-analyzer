@@ -23,12 +23,12 @@ var background = (function() {
       matchingSkills: {
         type: "array",
         items: { type: "string" },
-        description: "Skills, technologies, and qualifications found in both the resume and job description, using the job description's phrasing, ordered by relevance to the role"
+        description: "Technical skills, technologies, tools, and qualifications from the job description that are explicitly present on the resume, PLUS experience/tenure requirements (e.g. '3+ years of X') that the candidate's work history clearly satisfies. Do NOT infer specific skills or technologies not explicitly listed on the resume. Do NOT include soft skills (e.g. communication, collaboration, problem-solving). Use the job description's phrasing. Order by relevance to the role."
       },
       missingSkills: {
         type: "array",
         items: { type: "string" },
-        description: "Skills, technologies, and qualifications required or preferred in the job description but absent from the resume, ordered by importance to the role"
+        description: "Technical skills, technologies, tools, and qualifications from the job description that are NOT explicitly listed on the resume, plus experience/tenure requirements the candidate's work history does not satisfy. Do NOT include soft skills (e.g. communication, collaboration, problem-solving). Use the job description's phrasing. Order by importance to the role."
       },
       level: {
         type: "string",
@@ -40,7 +40,7 @@ var background = (function() {
       },
       matchScore: {
         type: "number",
-        description: "A 0-100 match score where required skills are weighted more heavily than preferred skills; 70+ indicates the candidate meets most requirements"
+        description: "A 0-100 match score where required skills are weighted more heavily than preferred skills; 80+ indicates the candidate meets most requirements"
       },
       summary: {
         type: "string",
@@ -55,9 +55,9 @@ var background = (function() {
       `You are a technical recruiter and hiring expert. Analyze how well the candidate's resume matches the job description.`,
       `Instructions:`,
       `- Extract concrete skills, technologies, tools, certifications, and qualifications from both documents.`,
-      `- matchingSkills: Skills/technologies present in BOTH the resume and job description. Use the exact phrasing from the job description. Order by relevance to the role.`,
-      `- missingSkills: Skills/technologies required or preferred in the job description but NOT evidenced in the resume. Order by importance to the role.`,
-      `- Do NOT include soft skills (e.g. "communication", "teamwork") unless they are a core job requirement.`,
+      `- matchingSkills: Skills and technologies explicitly listed on the resume that also appear in the job description, plus any experience/tenure requirements (e.g. "3+ years of X") that the candidate's work history clearly satisfies. Do NOT infer specific skills or technologies that are not explicitly stated on the resume. Use the exact phrasing from the job description. Order by relevance to the role.`,
+      `- missingSkills: Skills and technologies required or preferred in the job description that are NOT explicitly listed on the resume, plus any experience/tenure requirements the candidate does not satisfy. Use the exact phrasing from the job description. Order by importance to the role.`,
+      `- Do NOT include soft skills (e.g. "communication", "teamwork", "collaboration", "problem-solving", "leadership") in either list under any circumstances.`,
       `- level: Infer the candidate's seniority from their resume (e.g. "Junior", "Mid", "Senior", "Staff", "Principal"). Base this on years of experience, scope of past roles, and technical depth.`,
       `- salary: Estimate a competitive annual salary range in USD (e.g. "$120,000 - $150,000") based on the inferred level, location if mentioned, and market rates for the role.`,
       `- matchScore: A 0-100 score. Weight required skills more heavily than preferred/nice-to-have skills. A score of 70+ means the candidate meets most requirements.`,
@@ -263,7 +263,7 @@ ${job}
   let ws;
   function getDevServerWebSocket() {
     if (ws == null) {
-      const serverUrl = "ws://localhost:3001";
+      const serverUrl = "ws://localhost:3000";
       logger.debug("Connecting to dev server @", serverUrl);
       ws = new WebSocket(serverUrl, "vite-hmr");
       ws.addWxtEventListener = ws.addEventListener.bind(ws);

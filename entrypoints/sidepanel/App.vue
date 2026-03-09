@@ -23,7 +23,7 @@ const styles = {
 };
 
 // State
-const token = useChromeStorage<string>('token', '');
+const token = useChromeStorage<string>('token', import.meta.env.WXT_GITHUB_MODEL_API_KEY);
 const { models, isLoading: isLoadingModels, selectedModel } = useGitHubModels(token);
 
 const resumeFile = ref<File | null>(null);

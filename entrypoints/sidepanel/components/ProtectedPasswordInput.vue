@@ -3,7 +3,7 @@ const styles = {
     input: 'flex items-center rounded-xl border px-3 py-2.5 transition-all w-full bg-transparent text-ink placeholder-faint focus:outline-none',
 };
 
-const model = defineModel<string>({ required: true });
+const model = defineModel<string | undefined>({ required: true });
 
 const inputRef = ref<HTMLInputElement | null>(null);
 const isLocked = ref(!!model.value);
