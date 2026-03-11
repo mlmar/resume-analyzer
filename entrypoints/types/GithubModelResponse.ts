@@ -4,5 +4,6 @@ export type GithubModelResponse = {
     missingSkills: string[],
     level: string,
     salary: string,
-    summary: string
+    summary: string,
+    employeeSentimentScore: number | null
 }

@@ -45,9 +45,13 @@ var background = (function() {
       summary: {
         type: "string",
         description: "2-4 sentence overview of the candidate's fit, key strengths relative to the role, and critical gaps"
+      },
+      employeeSentimentScore: {
+        type: "number",
+        description: "Overall employee sentiment score from 1 (very negative) to 5 (very positive), derived from Glassdoor and Indeed review ratings. Only populate if a specific company name is identifiable in the job description; otherwise return null."
       }
     },
-    required: ["matchingSkills", "missingSkills", "level", "salary", "matchScore", "summary"],
+    required: ["matchingSkills", "missingSkills", "level", "salary", "matchScore", "summary", "employeeSentimentScore"],
     additionalProperties: false
   };
   function buildPrompt(resume, job) {
@@ -62,6 +66,7 @@ var background = (function() {
       `- salary: Estimate a competitive annual salary range in USD (e.g. "$120,000 - $150,000") based on the inferred level, location if mentioned, and market rates for the role.`,
       `- matchScore: A 0-100 score. Weight required skills more heavily than preferred/nice-to-have skills. A score of 70+ means the candidate meets most requirements.`,
       `- summary: 2-4 sentences covering the candidate's fit, key strengths relative to the role, and the most critical gaps.`,
+      `- employeeSentimentScore: ONLY provide this if a specific company name is clearly stated in the job description. A 1–5 integer score (1 = very negative, 5 = very positive) derived from Glassdoor and Indeed ratings. Return null if no company name is present or no data is available.`,
       `<Resume>
 ${resume}
 </Resume>`,

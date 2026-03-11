@@ -35,6 +35,10 @@
     --color-score-medium: var(--color-yellow-500);
     --color-score-low: var(--color-orange-500);
     --color-score-poor: var(--color-red-500);
+
+    /* Sentiment */
+    --color-sentiment-filled: var(--color-green-500);
+    --color-sentiment-empty: var(--color-gray-300);
 }
 
 :root {
