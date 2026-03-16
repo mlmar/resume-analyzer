@@ -54,11 +54,7 @@ const statusLabel = computed(() => {
 
 // UI State Reset
 function handleReset() {
-    isProcessing.value = false;
-    isDone.value = false;
-    error.value = '';
     jobText.value = [];
-    analysis.value = null;
     isInspecting.value = false;
     activeSkill.value = null;
 }
