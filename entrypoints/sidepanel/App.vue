@@ -247,6 +247,10 @@ onUnmounted(() => {
                         <span :class="styles.header">Summary</span>
                         <span>{{ analysis.summary }}</span>
                     </li>
+                    <li :class="styles.analysisItem">
+                        <span :class="styles.header">Suggestion</span>
+                        <span>{{ analysis.suggestion }}</span>
+                    </li>
 
                     <li :class="styles.analysisItem">
                         <span :class="styles.header">Matching Skills</span>

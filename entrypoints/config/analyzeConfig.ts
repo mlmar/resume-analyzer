@@ -29,12 +29,16 @@ export const matchSchema = {
             type: "string",
             description: "2-4 sentence overview of the candidate's fit, key strengths relative to the role, and critical gaps"
         },
+        suggestion: {
+            type: "string",
+            description: "2-3 concise, direct sentences of resume edits specifically tied to this job description — reference actual skills, titles, or requirements from the job posting. Each sentence must name a concrete change the candidate can make (e.g. move a specific experience to the top, rewrite a bullet to include a skill listed as required, highlight a quantified outcome that maps to a stated responsibility)."
+        },
         employeeSentimentScore: {
             type: "number",
             description: "Overall employee sentiment score from 1 (very negative) to 5 (very positive), derived from Glassdoor and Indeed review ratings. Only populate if a specific company name is identifiable in the job description; otherwise return null."
         }
     },
-    required: ["matchingSkills", "missingSkills", "level", "salary", "matchScore", "summary", "employeeSentimentScore"],
+    required: ["matchingSkills", "missingSkills", "level", "salary", "matchScore", "summary", "suggestion", "employeeSentimentScore"],
     additionalProperties: false
 };
 
@@ -50,6 +54,7 @@ export function buildPrompt(resume: string, job: string) {
         `- salary: Estimate a competitive annual salary range in USD (e.g. "$120,000 - $150,000") based on the inferred level, location if mentioned, and market rates for the role.`,
         `- matchScore: A 0-100 score. Weight required skills more heavily than preferred/nice-to-have skills. A score of 70+ means the candidate meets most requirements.`,
         `- summary: 2-4 sentences covering the candidate's fit, key strengths relative to the role, and the most critical gaps.`,
+        `- suggestion: 2-3 short, direct sentences. Every sentence MUST reference something specific from the job description (a required skill, a stated responsibility, a job title, or a listed qualification) and pair it with a concrete resume edit. Do not give generic advice — if you mention rewriting a bullet, name the skill or requirement it should reflect; if you recommend reordering experience, name the role or technology from the job posting that justifies it.`,
         `- employeeSentimentScore: ONLY provide this if a specific company name is clearly stated in the job description. A 1–5 integer score (1 = very negative, 5 = very positive) derived from Glassdoor and Indeed ratings. Return null if no company name is present or no data is available.`,
         `<Resume>\n${resume}\n</Resume>`,
         `<Job Description>\n${job}\n</Job Description>`
