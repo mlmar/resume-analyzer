@@ -3,6 +3,7 @@ import { InferenceAPI } from '@/entrypoints/sidepanel/lib/InferenceAPI';
 import { Inspector } from '@/entrypoints/sidepanel/lib/Inspector';
 import { PDFUtil } from '@/entrypoints/sidepanel/lib/PDFUtil';
 import { MessageType } from '@/entrypoints/types/Message';
+import { onKeyStroke } from '@vueuse/core';
 import { useChromeStorage } from '@/entrypoints/sidepanel/composables/useChromeStorage';
 import { useGitHubModels } from '@/entrypoints/sidepanel/composables/useGitHubModels';
 import { GithubModelResponse } from '@/entrypoints/types/GithubModelResponse';
@@ -61,6 +62,8 @@ function handleReset() {
 
 // Fetches analysis
 async function getAnalysis() {
+    turnOffInspect();
+
     if (!resumeFile.value || !jobText.value.length) {
         return;
     }
@@ -91,6 +94,14 @@ function handleResumeFileChange(file: File) {
     resumeFile.value = file;
 }
 
+// Turns off inspection mode (no-op if already off)
+function turnOffInspect() {
+    if (isInspecting.value) {
+        isInspecting.value = false;
+        inspector.toggle();
+    }
+}
+
 // Toggles selection mmode
 function handleToggleInspect() {
     isInspecting.value = !isInspecting.value;
@@ -118,6 +129,8 @@ function handleSkillClick(skill: string) {
         inspector.highlight(skill);
     }
 }
+
+onKeyStroke('Escape', turnOffInspect);
 
 onMounted(() => {
     inspector.open();
