@@ -233,23 +233,6 @@ onUnmounted(() => {
                             </span>
                         </div>
                     </li>
-                    <li v-if="analysis.employeeSentimentScore !== null" :class="styles.analysisItem">
-                        <span :class="styles.header">Employee Sentiment (Glassdoor / Indeed)</span>
-                        <div class="flex items-center gap-2 mb-1">
-                            <i
-                                v-for="n in 5"
-                                :key="n"
-                                :class="[
-                                    'sentiment-dot text-xl pi',
-                                    {
-                                        'pi-star text-sentiment-empty': n > analysis.employeeSentimentScore,
-                                        'pi-star-fill text-sentiment-filled': n <= analysis.employeeSentimentScore,
-                                    },
-                                ]"
-                            />
-                            <span v-if="analysis.employeeSentimentScore !== null" class="text-sm">{{ analysis.employeeSentimentScore }}/5</span>
-                        </div>
-                    </li>
                     <li :class="styles.analysisItem">
                         <span :class="styles.header">Expected Level & Salary</span>
                         <div class="flex gap-4">

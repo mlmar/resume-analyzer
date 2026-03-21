@@ -6,5 +6,4 @@ export type GithubModelResponse = {
     salary: string,
     summary: string,
     suggestion: string,
-    employeeSentimentScore: number | null
 }
