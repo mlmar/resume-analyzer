@@ -208,7 +208,7 @@ onUnmounted(() => {
                 <button
                     class="flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold text-white cursor-pointer transition-all duration-200 bg-gradient-to-r from-primary to-primary-dark hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
                     type="submit"
-                    :disabled="!token || !resumeFile || !jobText.length"
+                    :disabled="!token || !resumeFile || !jobText.length || isProcessing"
                 >
                     <i class="pi pi-bolt" />
                     Analyze
