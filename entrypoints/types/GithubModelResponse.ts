@@ -10,4 +10,5 @@ export type GithubModelResponse = {
 
 export type HistoryEntry = GithubModelResponse & {
     name: string,
+    jobUrl: string,
 }

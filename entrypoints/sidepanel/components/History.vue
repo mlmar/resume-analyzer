@@ -94,7 +94,9 @@ function handleDownloadCSV() {
                         @keydown.escape.prevent="editingIndex = null"
                         @blur="commitEdit(i)"
                     />
-                    <span v-else class="text-sm text-ink truncate">{{ entry.name }}</span>
+                    <div v-else class="flex items-center gap-1.5 min-w-0">
+                        <span class="text-sm text-ink truncate">{{ entry.name }}</span>
+                    </div>
                     <button
                         type="button"
                         :aria-label="editingIndex === i ? 'Save name' : 'Edit name'"
@@ -103,6 +105,17 @@ function handleDownloadCSV() {
                     >
                         <i :class="editingIndex === i ? 'pi pi-check text-primary' : 'pi pi-pencil'" class="text-sm" />
                     </button>
+                    <a
+                        v-if="entry.jobUrl"
+                        :href="entry.jobUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        :title="entry.jobUrl"
+                        class="shrink-0 text-muted hover:text-primary transition-colors duration-150"
+                        @click.stop
+                    >
+                        <i class="pi pi-external-link text-sm" />
+                    </a>
                 </div>
                 <span class="text-lg font-semibold leading-none shrink-0" :class="matchScoreClass(entry.matchScore)">{{ entry.matchScore }}%</span>
             </li>

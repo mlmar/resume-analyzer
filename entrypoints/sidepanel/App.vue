@@ -85,7 +85,11 @@ async function getAnalysis() {
             token: token.value,
             model: selectedModel.value,
         });
-        history.value = [{ ...analysis.value!, name: new Date().toLocaleString() }, ...(Array.isArray(history.value) ? history.value : [])];
+        const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+        history.value = [
+            { ...analysis.value!, name: new Date().toLocaleString(), jobUrl: tab.url ?? '' },
+            ...(Array.isArray(history.value) ? history.value : []),
+        ];
         isDone.value = true;
     } catch (err) {
         console.error(err);
