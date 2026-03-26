@@ -6,10 +6,12 @@ import { MessageType } from '@/entrypoints/types/Message';
 import { onKeyStroke } from '@vueuse/core';
 import { useChromeStorage } from '@/entrypoints/sidepanel/composables/useChromeStorage';
 import { useGitHubModels } from '@/entrypoints/sidepanel/composables/useGitHubModels';
-import { GithubModelResponse } from '@/entrypoints/types/GithubModelResponse';
+import { GithubModelResponse, HistoryEntry } from '@/entrypoints/types/GithubModelResponse';
+import { matchScoreClass } from '@/entrypoints/sidepanel/lib/matchScoreClass';
 import FileDropInput from '@/entrypoints/sidepanel/components/FileDropInput.vue';
 import StatusCard from '@/entrypoints/sidepanel/components/StatusCard.vue';
 import ProtectedPasswordInput from '@/entrypoints/sidepanel/components/ProtectedPasswordInput.vue';
+import History from '@/entrypoints/sidepanel/components/History.vue';
 
 // Styles
 const styles = {
@@ -35,6 +37,8 @@ const jobText = ref<string[]>([]);
 const analysis = ref<GithubModelResponse | null>(null);
 const isInspecting = ref(false);
 const activeSkill = ref<string | null>(null);
+const history = useChromeStorage<HistoryEntry[]>('analysis-history', []);
+const activeTab = ref<'main' | 'history'>('main');
 
 const inspector = new Inspector();
 
@@ -81,8 +85,10 @@ async function getAnalysis() {
             token: token.value,
             model: selectedModel.value,
         });
+        history.value = [{ ...analysis.value!, name: new Date().toLocaleString() }, ...(Array.isArray(history.value) ? history.value : [])];
         isDone.value = true;
     } catch (err) {
+        console.error(err);
         error.value = (err as Error).message || 'Something went wrong. Check your token, resume, or job description and try again.';
     } finally {
         isProcessing.value = false;
@@ -119,6 +125,23 @@ function handleSelectInspect(text: string[]) {
     jobText.value = text;
 }
 
+// Loads a history entry into the main view
+function loadFromHistory(entry: HistoryEntry) {
+    const { name, ...result } = entry;
+    analysis.value = result;
+    activeTab.value = 'main';
+}
+
+// Clears all history
+function clearHistory() {
+    history.value = [];
+}
+
+// Renames a history entry
+function renameHistory(index: number, name: string) {
+    history.value = (Array.isArray(history.value) ? history.value : []).map((e, i) => (i === index ? { ...e, name } : e));
+}
+
 // Highlights clicked skill
 function handleSkillClick(skill: string) {
     if (activeSkill.value === skill) {
@@ -153,9 +176,27 @@ onUnmounted(() => {
                 <i class="pi pi-file-pdf" />
             </span>
             <h1 class="font-semibold">Resume Analyzer</h1>
+            <button
+                type="button"
+                class="ml-auto flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-200 cursor-pointer"
+                :class="{
+                    'bg-primary/10 text-primary border border-primary/40': activeTab === 'history',
+                    'bg-surface border border-border-strong text-muted hover:text-ink hover:border-primary/40': activeTab !== 'history',
+                }"
+                @click="activeTab = activeTab === 'history' ? 'main' : 'history'"
+            >
+                <i class="pi pi-history text-xs" />
+                History
+                <span
+                    v-if="history.length"
+                    class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-semibold"
+                    :class="activeTab === 'history' ? 'bg-primary text-page' : 'bg-muted/20 text-muted'"
+                    >{{ history.length }}</span
+                >
+            </button>
         </header>
 
-        <section class="overflow-y-auto flex flex-col basis-full">
+        <section v-if="activeTab === 'main'" class="overflow-y-auto flex flex-col basis-full">
             <form class="flex flex-col h-full gap-4 p-4" aria-label="Resume analyzer" @submit.prevent="getAnalysis">
                 <section class="flex flex-col gap-2">
                     <label for="token" :class="styles.header">GitHub Model Token</label>
@@ -221,14 +262,7 @@ onUnmounted(() => {
                     <li :class="styles.analysisItem">
                         <span :class="styles.header">Match Score</span>
                         <div class="flex gap-4">
-                            <span
-                                class="text-[5em] font-semibold leading-none"
-                                :class="{
-                                    'text-score-high': analysis.matchScore >= 80,
-                                    'text-score-medium': analysis.matchScore < 80 && analysis.matchScore >= 60,
-                                    'text-score-low': analysis.matchScore < 60 && analysis.matchScore >= 40,
-                                    'text-score-poor': analysis.matchScore < 40,
-                                }"
+                            <span class="text-[5em] font-semibold leading-none" :class="matchScoreClass(analysis.matchScore)"
                                 >{{ analysis.matchScore }}%
                             </span>
                         </div>
@@ -275,6 +309,8 @@ onUnmounted(() => {
                 </ul>
             </section>
         </section>
+
+        <History v-else :history="history" @select="loadFromHistory" @clear="clearHistory" @rename="renameHistory" />
     </main>
 </template>
 

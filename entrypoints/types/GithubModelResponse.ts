@@ -7,3 +7,7 @@ export type GithubModelResponse = {
     summary: string,
     suggestion: string,
 }
+
+export type HistoryEntry = GithubModelResponse & {
+    name: string,
+}
