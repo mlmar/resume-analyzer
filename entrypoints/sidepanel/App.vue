@@ -199,7 +199,16 @@ onUnmounted(() => {
         <section v-if="activeTab === 'main'" class="overflow-y-auto flex flex-col basis-full">
             <form class="flex flex-col h-full gap-4 p-4" aria-label="Resume analyzer" @submit.prevent="getAnalysis">
                 <section class="flex flex-col gap-2">
-                    <label for="token" :class="styles.header">GitHub Model Token</label>
+                    <span class="flex items-end justify-between">
+                        <label for="token" :class="styles.header">GitHub Model Token</label>
+                        <a
+                            href="https://github.com/settings/tokens"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-sm text-primary hover:underline"
+                            >Get Token</a
+                        >
+                    </span>
                     <ProtectedPasswordInput id="token" v-model="token" placeholder="github_pat__xxxxxxxxxxxx" />
                 </section>
 
